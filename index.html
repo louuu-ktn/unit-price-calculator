@@ -1,0 +1,574 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111827">
+<title>Unit Price Calculator</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f4f6;
+    color: #111827;
+    padding: 18px 14px 35px;
+}
+
+.container {
+    max-width: 480px;
+    margin: auto;
+}
+
+.header {
+    margin: 10px 0 22px;
+}
+
+.header h1 {
+    font-size: 27px;
+    font-weight: 800;
+}
+
+.header p {
+    color: #6b7280;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.product-card {
+    background: white;
+    padding: 17px;
+    border-radius: 16px;
+    margin-bottom: 13px;
+    border: 1px solid #e5e7eb;
+}
+
+.product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.product-header h3 {
+    font-size: 16px;
+}
+
+.remove-btn {
+    border: none;
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 8px 11px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 11px;
+}
+
+label {
+    display: block;
+    color: #6b7280;
+    font-size: 12px;
+    margin-bottom: 7px;
+}
+
+input {
+    width: 100%;
+    min-width: 0;
+    padding: 14px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 16px;
+    outline: none;
+    background: white;
+    color: #111827;
+}
+
+input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px #dbeafe;
+}
+
+.add-btn {
+    width: 100%;
+    padding: 16px;
+    border: 1px dashed #9ca3af;
+    border-radius: 12px;
+    background: transparent;
+    color: #374151;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 4px 0 20px;
+}
+
+.result-section {
+    background: #111827;
+    color: white;
+    padding: 20px;
+    border-radius: 17px;
+}
+
+.result-section h2 {
+    font-size: 17px;
+    margin-bottom: 16px;
+}
+
+.group-title {
+    color: #9ca3af;
+    font-size: 12px;
+    margin: 16px 0 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 13px 0;
+    border-bottom: 1px solid #374151;
+    gap: 10px;
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.result-unit {
+    color: #9ca3af;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.result-price {
+    font-weight: 700;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.best {
+    color: #4ade80;
+}
+
+.best-label {
+    background: #14532d;
+    color: #86efac;
+    font-size: 10px;
+    padding: 4px 7px;
+    border-radius: 20px;
+    margin-left: 5px;
+}
+
+.empty {
+    color: #9ca3af;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.reset-btn {
+    width: 100%;
+    padding: 15px;
+    background: #e5e7eb;
+    color: #374151;
+    border: none;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 13px;
+}
+
+.footer {
+    text-align: center;
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 20px;
+}
+
+@media (max-width: 360px) {
+    body {
+        padding: 12px 10px;
+    }
+
+    .product-card {
+        padding: 13px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>Unit Price</h1>
+        <p>Compare products. Find the best value.</p>
+    </div>
+
+    <div id="productList"></div>
+
+    <button class="add-btn" onclick="addProduct()">
+        + Add Product
+    </button>
+
+    <div class="result-section">
+        <h2>Best Value Comparison</h2>
+        <div id="results">
+            <p class="empty">
+                Enter product price and quantity to compare.
+            </p>
+        </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">
+        Reset All
+    </button>
+
+    <div class="footer">
+        UNIT PRICE CALCULATOR
+    </div>
+
+</div>
+
+<script>
+
+let products = [];
+let nextId = 0;
+
+// Add product
+function addProduct() {
+
+    products.push({
+        id: nextId++,
+        price: "",
+        quantity: ""
+    });
+
+    render();
+}
+
+// Remove product
+function removeProduct(id) {
+
+    products = products.filter(p => p.id !== id);
+
+    render();
+}
+
+// Update input
+function updateProduct(id, field, value) {
+
+    const product = products.find(p => p.id === id);
+
+    if (product) {
+        product[field] = value;
+    }
+
+    calculate();
+}
+
+// Parse quantity and unit
+function parseQuantity(input) {
+
+    const text = input.trim().toLowerCase();
+
+    if (!text) return null;
+
+    // Number only = pcs
+    const match = text.match(
+        /^(\d+(?:\.\d+)?)\s*(kg|mg|g|oz|ml|l|cc|pcs|pc|ชิ้น)?$/
+    );
+
+    if (!match) return null;
+
+    const amount = Number(match[1]);
+    const unit = match[2] || "pcs";
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+        return null;
+    }
+
+    // Weight
+    if (unit === "mg") {
+        return {
+            value: amount / 1000,
+            type: "weight",
+            unit: "g"
+        };
+    }
+
+    if (unit === "g") {
+        return {
+            value: amount,
+            type: "weight",
+            unit: "g"
+        };
+    }
+
+    if (unit === "kg") {
+        return {
+            value: amount * 1000,
+            type: "weight",
+            unit: "g"
+        };
+    }
+
+    // Ounce to gram
+    if (unit === "oz") {
+        return {
+            value: amount * 28.3495,
+            type: "weight",
+            unit: "g"
+        };
+    }
+
+    // Volume
+    if (unit === "ml" || unit === "cc") {
+        return {
+            value: amount,
+            type: "volume",
+            unit: "ml"
+        };
+    }
+
+    if (unit === "l") {
+        return {
+            value: amount * 1000,
+            type: "volume",
+            unit: "ml"
+        };
+    }
+
+    // Pieces
+    if (
+        unit === "pcs" ||
+        unit === "pc" ||
+        unit === "ชิ้น"
+    ) {
+        return {
+            value: amount,
+            type: "count",
+            unit: "pcs"
+        };
+    }
+
+    return null;
+}
+
+// Render products
+function render() {
+
+    const list = document.getElementById("productList");
+
+    list.innerHTML = "";
+
+    products.forEach((product, index) => {
+
+        const card = document.createElement("div");
+        card.className = "product-card";
+
+        const header = document.createElement("div");
+        header.className = "product-header";
+
+        const title = document.createElement("h3");
+
+        title.textContent =
+            `Product ${String.fromCharCode(65 + index)}`;
+
+        header.appendChild(title);
+
+        if (products.length > 1) {
+
+            const remove = document.createElement("button");
+
+            remove.className = "remove-btn";
+            remove.textContent = "Remove";
+
+            remove.onclick = () => removeProduct(product.id);
+
+            header.appendChild(remove);
+        }
+
+        const grid = document.createElement("div");
+        grid.className = "input-grid";
+
+        // Price
+        const priceBox = document.createElement("div");
+
+        const priceLabel = document.createElement("label");
+        priceLabel.textContent = "Price (฿)";
+
+        const priceInput = document.createElement("input");
+
+        priceInput.type = "number";
+        priceInput.min = "0";
+        priceInput.step = "any";
+        priceInput.placeholder = "45";
+        priceInput.value = product.price;
+
+        priceInput.addEventListener("input", e => {
+            updateProduct(product.id, "price", e.target.value);
+        });
+
+        priceBox.append(priceLabel, priceInput);
+
+        // Quantity
+        const quantityBox = document.createElement("div");
+
+        const quantityLabel = document.createElement("label");
+        quantityLabel.textContent = "Quantity";
+
+        const quantityInput = document.createElement("input");
+
+        quantityInput.type = "text";
+        quantityInput.placeholder = "500 g / 1 kg";
+        quantityInput.value = product.quantity;
+        quantityInput.autocomplete = "off";
+
+        quantityInput.addEventListener("input", e => {
+            updateProduct(product.id, "quantity", e.target.value);
+        });
+
+        quantityBox.append(quantityLabel, quantityInput);
+
+        grid.append(priceBox, quantityBox);
+
+        card.append(header, grid);
+
+        list.appendChild(card);
+    });
+
+    calculate();
+}
+
+// Calculate comparison
+function calculate() {
+
+    const validProducts = products.map((product, index) => {
+
+        const price = Number(product.price);
+        const quantity = parseQuantity(product.quantity);
+
+        if (
+            !quantity ||
+            !Number.isFinite(price) ||
+            price <= 0
+        ) {
+            return null;
+        }
+
+        return {
+            name: `Product ${String.fromCharCode(65 + index)}`,
+            price,
+            quantity: quantity.value,
+            type: quantity.type,
+            unit: quantity.unit,
+            unitPrice: price / quantity.value *
+                (quantity.type === "count" ? 1 : 100)
+        };
+
+    }).filter(Boolean);
+
+    const results = document.getElementById("results");
+
+    if (validProducts.length === 0) {
+
+        results.innerHTML = `
+            <p class="empty">
+                Enter product price and quantity to compare.
+            </p>
+        `;
+
+        return;
+    }
+
+    const groups = {
+        weight: validProducts.filter(p => p.type === "weight"),
+        volume: validProducts.filter(p => p.type === "volume"),
+        count: validProducts.filter(p => p.type === "count")
+    };
+
+    const groupLabels = {
+        weight: "Weight (per 100 g)",
+        volume: "Volume (per 100 ml)",
+        count: "Quantity (per 1 pcs)"
+    };
+
+    let html = "";
+
+    ["weight", "volume", "count"].forEach(type => {
+
+        const group = groups[type];
+
+        if (group.length === 0) return;
+
+        group.sort((a, b) => a.unitPrice - b.unitPrice);
+
+        html += `<div class="group-title">${groupLabels[type]}</div>`;
+
+        group.forEach((product, index) => {
+
+            const isBest = index === 0;
+
+            html += `
+                <div class="result-item">
+                    <div>
+                        <div class="result-name ${isBest ? "best" : ""}">
+                            ${product.name}
+                            ${isBest
+                                ? '<span class="best-label">BEST VALUE</span>'
+                                : ""}
+                        </div>
+
+                        <div class="result-unit">
+                            ${type === "count"
+                                ? "Per 1 pcs"
+                                : `Per 100 ${product.unit}`}
+                        </div>
+                    </div>
+
+                    <div class="result-price ${isBest ? "best" : ""}">
+                        ฿${product.unitPrice.toFixed(2)}
+                    </div>
+                </div>
+            `;
+        });
+
+    });
+
+    results.innerHTML = html;
+}
+
+// Reset
+function resetAll() {
+
+    products = [];
+    nextId = 0;
+
+    addProduct();
+    addProduct();
+}
+
+// Initial products
+addProduct();
+addProduct();
+
+</script>
+
+</body>
+</html>
